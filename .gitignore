@@ -49,3 +49,6 @@
 .history/
 *.app
 .snapshots/*
+
+#gitignore ?
+.gitignore

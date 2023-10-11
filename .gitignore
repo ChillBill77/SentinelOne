@@ -1,0 +1,51 @@
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+*.lock.*
+
+# Compiled files
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+
+# logs
+*.log
+
+# Directories
+.terraform/
+.vagrant/
+
+# SSH Keys
+*.pem
+
+# Backup files
+*.bak
+
+# Ignored Terraform files
+*gitignore*.tf
+
+#Ansible
+!/group_vars
+/group_vars/**
+!/host_vars
+/host_vars/**
+*.retry
+
+# Ignore Mac .DS_Store files
+.DS_Store
+
+# Ignored vscode files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Local History for Visual Studio Code
+.history/
+*.app
+.snapshots/*

@@ -1,0 +1,193 @@
+# code: language=ansible
+---
+- hosts: all
+  vars_prompt:
+   - name: customer_name
+     prompt: What would you like the S1-Sitename to be ?
+     private: false
+
+  tasks:
+  
+  - name: Create / Update site
+    sva.sentinelone.sentinelone_sites:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      name: "{{customer_name}}"
+      license_type: "complete"
+      description: "Testsite "
+      state: "present"
+      site_type: "Trial"
+
+  - name: Copy the existing policy but do not inherit
+    sva.sentinelone.sentinelone_policies:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}" 
+      inherit: "no"
+      policy:
+        agentUiOn: true
+        agentUi:
+          agentUiOn: true
+          showAgentWarnings: true
+        scanNewAgents: yes
+        snapshotsOn: true
+        ioc: true
+        engines:
+          applicationControl: "on"
+          dataFiles: "on"
+          executables: "on"
+          exploits: "on"
+          lateralMovement: "on"
+          penetration: "on"
+          preExecution: "on"
+          preExecutionSuspicious: "on"
+          pup: "on"
+          remoteShell: "on"
+          reputation: "on"
+        mitigationMode: "protect"
+        mitigationModeSuspicious: "detect"
+      
+  - name: Create Filters - WINDOWS Everything but Desktops & Laptops
+    sva.sentinelone.sentinelone_filters:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "FLT_OS-Windows-Servers"
+      filter_fields:
+        osTypes:
+          - windows
+          - windows_legacy
+        machineTypes:
+          - unknown
+          - server
+          - storage
+          - "kubernetes node"
+          - "kubernetes serverless"          
+
+  - name: Create group based on filter
+    sva.sentinelone.sentinelone_groups:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "GRP_OS_Windows-Servers"
+      filter_name: "FLT_OS-Windows-Servers"
+
+  - name: Create Filters - WINDOWS Desktops & Laptops
+    sva.sentinelone.sentinelone_filters:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "FLT_OS-Windows-Desktops"
+      filter_fields:
+        osTypes:
+          - windows
+          - windows_legacy
+        machineTypes:
+          - desktop
+          - laptop
+
+  - name: Create group based on filter
+    sva.sentinelone.sentinelone_groups:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "GRP_OS_Windows-Desktops-Laptops"
+      filter_name: "FLT_OS-Windows-Desktops"
+
+  - name: Create Filters - LINUX Everything but Desktops & Laptops
+    sva.sentinelone.sentinelone_filters:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "FLT_OS-Linux-Servers"
+      filter_fields:
+        osTypes:
+          - linux
+        machineTypes:
+          - unknown
+          - server
+          - storage
+          - "kubernetes node"
+          - "kubernetes serverless"
+
+  - name: Create group based on filter
+    sva.sentinelone.sentinelone_groups:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "GRP_OS_Linux-Servers"
+      filter_name: "FLT_OS-Linux-Servers"
+
+  - name: Create Filters - LINUX  Desktops & Laptops
+    sva.sentinelone.sentinelone_filters:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "FLT_OS-Linux-Desktops"
+      filter_fields:
+        osTypes:
+          - linux
+        machineTypes:
+          - desktop
+          - laptop
+  
+  - name: Create group based on filter
+    sva.sentinelone.sentinelone_groups:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "GRP_OS_Linux-Desktops-Laptops"
+      filter_name: "FLT_OS-Linux-Desktops"
+
+  - name: Create Filters - MacOS Desktops & Laptops
+    sva.sentinelone.sentinelone_filters:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "FLT_OS-MacOS-Desktops"
+      filter_fields:
+        osTypes:
+          - macos
+        machineTypes:
+          - desktop
+          - laptop
+
+  - name: Create group based on filter
+    sva.sentinelone.sentinelone_groups:
+      console_url: "{{sentinelone_baseurl}}"
+      token: "{{sentinelone_apikey}}"
+      site_name: "{{customer_name}}"    
+      name: "GRP_OS_MacOS-Desktops-Laptops"
+      filter_name: "FLT_OS-MacOS-Desktops"
+
+  - name: Update Server Groups Policy to Detect Only
+    sva.sentinelone.sentinelone_policies:
+        console_url: "{{sentinelone_baseurl}}"
+        token: "{{sentinelone_apikey}}"
+        site_name: "{{customer_name}}" 
+        groups:
+          - GRP_OS_Linux-Servers
+          - GRP_OS_Windows-Servers
+        inherit: "no"
+        policy:
+          autoMitigationAction: "mitigation.none"
+          mitigationMode: "detect"
+          mitigationModeSuspicious: "detect"
+          scanNewAgents: false
+  
+  - name: Update Server Groups Policy to Detect Only
+    sva.sentinelone.sentinelone_policies:
+        console_url: "{{sentinelone_baseurl}}"
+        token: "{{sentinelone_apikey}}"
+        site_name: "{{customer_name}}" 
+        groups:
+          - "Default Group"
+          - "GRP_OS_Windows-Desktops-Laptops"
+          - "GRP_OS_Linux-Desktops-Laptops"
+          - "GRP_OS_MacOS-Desktops-Laptops"
+        inherit: "no"
+        policy:
+          autoMitigationAction: "mitigation.rollbackThreat"
+          mitigationMode: "protect"
+          mitigationModeSuspicious: "protect"
+          scanNewAgents: true

@@ -1,0 +1,21 @@
+# code: language=ansible
+---
+- hosts: all
+  tasks:
+
+    - name: Get All the Active S1 Sites
+      ansible.builtin.uri:
+        url: "{{ sentinelone_baseurl }}/web/api/v2.1/sites?state=active"
+        method: GET
+        body_format: json
+        return_content: true
+        headers:
+          Authorization: "APIToken {{ sentinelone_apikey }}"
+      register: S1_active_sites
+
+    - name: Prints Active Sites with Site Registration Code
+      ansible.builtin.debug:
+        msg: 
+          "{{ item.name }} // {{ item.registrationToken }}"
+      loop: "{{ S1_active_sites.json.data.sites }}"
+
